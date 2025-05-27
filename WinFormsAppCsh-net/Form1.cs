@@ -67,6 +67,14 @@ namespace WinFormsAppCsh_net
                 listMessages.Items.Add("Recv: " + msg)
             ));
 
+            if (!msg.StartsWith("potvrzeno:") && !msg.StartsWith("acknowledged:"))
+            {
+                // Odpovíme potvrzením
+                string confirmation = "potvrzeno: " + remoteEP.Address.ToString();
+                byte[] confirmationData = Encoding.UTF8.GetBytes(confirmation);
+                _udpClient.Send(confirmationData, confirmationData.Length, remoteEP);
+            }
+
             // Zaregistrujeme pøíjem další zprávy
             udpBeginReceive();
         }

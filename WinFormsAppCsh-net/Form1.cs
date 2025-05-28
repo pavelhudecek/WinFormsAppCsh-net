@@ -2,12 +2,15 @@ using System;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
+using System.Drawing.Text;
 
 namespace WinFormsAppCsh_net
 {
     public partial class Form1 : Form
     {
-        private UdpClient _udpClient;
+        private UdpClient udpClient;
+        private TcpListener tcpListener;
+        private TcpClient tcpClient;
 
         public Form1()
         {
@@ -19,24 +22,26 @@ namespace WinFormsAppCsh_net
 
         }
 
+        private void udpBeginReceive()
+        {
+            // zaregistrujeme callback, který se spustí pøi pøijetí paketu
+            udpClient.BeginReceive(ReceiveCallback, null);
+        }
+
         private void buttonUDPstart_Click(object sender, EventArgs e)
         {
             // Pokud chcete zároveò IPv4 i IPv6 pøíjem, použijte DualMode
-            _udpClient = new UdpClient(AddressFamily.InterNetworkV6);
-            _udpClient.Client.DualMode = true;   // umožní pøijímat i IPv4
-            _udpClient.Client.Bind(new IPEndPoint(IPAddress.IPv6Any, 12345));
-            
+            udpClient = new UdpClient(AddressFamily.InterNetworkV6);
+            udpClient.Client.DualMode = true;   // umožní pøijímat i IPv4
+            udpClient.Client.Bind(new IPEndPoint(IPAddress.IPv6Any, Convert.ToInt32(textPort.Text)));
             udpBeginReceive();
+
+            listStat.Items.Add("udpClient spuštìn.");
             buttonUDPstart.Enabled = false;
             buttonStop.Enabled = true;
             buttonSendMsg.Enabled = true;
         }
 
-        private void udpBeginReceive()
-        {
-            // zaregistrujeme callback, který se spustí pøi pøijetí paketu
-            _udpClient.BeginReceive(ReceiveCallback, null);
-        }
         private void ReceiveCallback(IAsyncResult ar)
         {
             IPEndPoint remoteEP = null;
@@ -44,7 +49,7 @@ namespace WinFormsAppCsh_net
 
             try
             {
-                buffer = _udpClient.EndReceive(ar, ref remoteEP);
+                buffer = udpClient.EndReceive(ar, ref remoteEP);
             }
             catch (ObjectDisposedException)
             {
@@ -64,15 +69,15 @@ namespace WinFormsAppCsh_net
             // Dekódujeme zprávu a pøidáme na UI
             string msg = Encoding.UTF8.GetString(buffer);
             this.Invoke((Action)(() =>
-                listMessages.Items.Add("Recv: " + msg)
+                listMessages.Items.Add("Recv> " + msg)
             ));
 
-            if (!msg.StartsWith("potvrzeno:") && !msg.StartsWith("acknowledged:"))
+            if (!msg.StartsWith("#ack:"))
             {
                 // Odpovíme potvrzením
-                string confirmation = "potvrzeno: " + remoteEP.Address.ToString();
+                string confirmation = "#ack:" + remoteEP.ToString();
                 byte[] confirmationData = Encoding.UTF8.GetBytes(confirmation);
-                _udpClient.Send(confirmationData, confirmationData.Length, remoteEP);
+                udpClient.Send(confirmationData, confirmationData.Length, remoteEP);
             }
 
             // Zaregistrujeme pøíjem další zprávy
@@ -84,33 +89,112 @@ namespace WinFormsAppCsh_net
 
         }
 
+        private void buttonTCPconn_Click(object sender, EventArgs e)
+        {
+
+        }
+
         private void buttonStop_Click(object sender, EventArgs e)
         {
-            _udpClient.Close();
+            if (udpClient != null)
+            {
+                udpClient.Close();
+                udpClient.Dispose();
+                listStat.Items.Add("udpClient ukonèen.");
+            }
+
             buttonUDPstart.Enabled = true;
+            buttonTCPstart.Enabled = true;
             buttonSendMsg.Enabled = false;
         }
 
         private void buttonSendMsg_Click(object sender, EventArgs e)
         {
-            try
-            {
-                byte[] data = Encoding.UTF8.GetBytes(textSendMsg.Text);
-                // Adresa a port pøíjemce
-                IPAddress remoteIp = IPAddress.Parse(textIPadr.Text);
-                int remotePort = Convert.ToInt32(textPort.Text);
+            IPAddress remoteIp = null;
 
-                var endpoint = new IPEndPoint(remoteIp, remotePort);
-                _udpClient.Send(data, data.Length, endpoint);
-            }
-            catch (FormatException)
+            if (udpClient != null)
             {
-                MessageBox.Show("Neplatná IP adresa.");
+                try
+                {
+
+                    // Adresa a port pøíjemce
+
+                    remoteIp = IPAddress.Parse(textIPadr.Text);
+                }
+                catch (FormatException)
+                {
+                    listStat.Items.Add("Neplatná IP adresa.");
+                }
+                try
+                {
+                    if (remoteIp == null || remoteIp.AddressFamily != AddressFamily.InterNetworkV6 && remoteIp.AddressFamily != AddressFamily.InterNetwork)
+                    {
+                        listStat.Items.Add("remoteIP neni");
+                        IPAddress[] addresses = Dns.GetHostAddresses(textIPadr.Text);
+                        remoteIp = Array.Find(addresses, a => a.AddressFamily == AddressFamily.InterNetworkV6);
+                        if (remoteIp == null || remoteIp.AddressFamily != AddressFamily.InterNetworkV6)
+                        {
+                            listStat.Items.Add("remoteIP neni v6");
+                            remoteIp = Array.Find(addresses, a => a.AddressFamily == AddressFamily.InterNetwork);
+                            listStat.Items.Add("addresses len: " + addresses.Length + "remoteIP" + remoteIp.ToString());
+                        }
+                    }
+
+                    int remotePort = Convert.ToInt32(textPort.Text);
+                    var endpoint = new IPEndPoint(remoteIp, remotePort);
+
+                    byte[] data = Encoding.UTF8.GetBytes(textSendMsg.Text);
+                    udpClient.Send(data, data.Length, endpoint);
+
+                    listMessages.Items.Add("Sent:" + remoteIp.ToString() + ">" + textSendMsg.Text);
+                }
+                catch (FormatException)
+                {
+                    listStat.Items.Add("Neplatná IP adresa.");
+                }
+                catch (Exception ex)
+                {
+                    listStat.Items.Add($"Odeslání selhalo: {ex.Message}");
+                }
+
             }
-            catch (Exception ex)
+            if (tcpClient != null && tcpClient.Connected)
             {
-                MessageBox.Show($"Odeslání selhalo: {ex.Message}");
+                try
+                {
+                    NetworkStream stream = tcpClient.GetStream();
+                    byte[] data = Encoding.UTF8.GetBytes(textSendMsg.Text);
+                    stream.Write(data, 0, data.Length);
+                    listMessages.Items.Add("Sent: " + textSendMsg.Text);
+                }
+                catch (Exception ex)
+                {
+                    listStat.Items.Add($"Odeslání TCP zprávy selhalo: {ex.Message}");
+                }
             }
+
+        }
+
+        private void buttonStat_Click(object sender, EventArgs e)
+        {
+            if (udpClient!=null)
+            {
+                listStat.Items.Add("udpClient:");
+                listStat.Items.Add($"AddressFamily:{udpClient.Client.AddressFamily.ToString()}");
+                if (udpClient.Client.LocalEndPoint != null) listStat.Items.Add($"LocalEndPoint:{udpClient.Client.LocalEndPoint.ToString()}");
+                listStat.Items.Add($"LocalAddressFamily:{udpClient.Client.AddressFamily.ToString()}");
+                listStat.Items.Add($"DualMode:{udpClient.Client.DualMode.ToString()}");
+                listStat.Items.Add($"EnableBroadcast:{udpClient.Client.EnableBroadcast.ToString()}");
+                listStat.Items.Add($"ExclusiveAddressUse:{udpClient.Client.ExclusiveAddressUse.ToString()}");
+                listStat.Items.Add($"ProtocolType:{udpClient.Client.ProtocolType.ToString()}");
+                listStat.Items.Add($"Ttl:{udpClient.Client.Ttl.ToString()}");
+                if (udpClient.Client.RemoteEndPoint!=null) listStat.Items.Add($"RemoteEndPoint:{udpClient.Client.RemoteEndPoint.ToString()}");
+                listStat.Items.Add($"SocketType:{udpClient.Client.SocketType.ToString()}");    
+            } else
+            {
+                listStat.Items.Add("(udpClient není inicializován.)");
+            }
+
         }
     }
 }

@@ -40,12 +40,15 @@
             buttonUDPstart = new Button();
             buttonTCPstart = new Button();
             buttonStop = new Button();
+            buttonTCPconn = new Button();
+            listStat = new ListBox();
+            buttonStat = new Button();
             SuspendLayout();
             // 
             // buttonSendMsg
             // 
             buttonSendMsg.Enabled = false;
-            buttonSendMsg.Location = new Point(452, 573);
+            buttonSendMsg.Location = new Point(531, 667);
             buttonSendMsg.Name = "buttonSendMsg";
             buttonSendMsg.Size = new Size(126, 71);
             buttonSendMsg.TabIndex = 0;
@@ -59,22 +62,23 @@
             listMessages.ItemHeight = 15;
             listMessages.Location = new Point(12, 12);
             listMessages.Name = "listMessages";
-            listMessages.Size = new Size(566, 439);
+            listMessages.Size = new Size(645, 439);
             listMessages.TabIndex = 1;
             // 
             // textSendMsg
             // 
-            textSendMsg.Location = new Point(12, 573);
+            textSendMsg.Location = new Point(12, 667);
             textSendMsg.Multiline = true;
             textSendMsg.Name = "textSendMsg";
-            textSendMsg.Size = new Size(434, 71);
+            textSendMsg.Size = new Size(513, 71);
             textSendMsg.TabIndex = 2;
+            textSendMsg.Text = "msg123";
             // 
             // textIPadr
             // 
             textIPadr.Location = new Point(57, 457);
             textIPadr.Name = "textIPadr";
-            textIPadr.Size = new Size(257, 23);
+            textIPadr.Size = new Size(295, 23);
             textIPadr.TabIndex = 3;
             textIPadr.Text = "127.0.0.1";
             // 
@@ -90,7 +94,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(320, 460);
+            label2.Location = new Point(399, 460);
             label2.Name = "label2";
             label2.Size = new Size(32, 15);
             label2.TabIndex = 5;
@@ -98,7 +102,7 @@
             // 
             // textPort
             // 
-            textPort.Location = new Point(358, 457);
+            textPort.Location = new Point(437, 457);
             textPort.Name = "textPort";
             textPort.Size = new Size(88, 23);
             textPort.TabIndex = 6;
@@ -108,37 +112,71 @@
             // 
             buttonUDPstart.Location = new Point(12, 486);
             buttonUDPstart.Name = "buttonUDPstart";
-            buttonUDPstart.Size = new Size(138, 23);
+            buttonUDPstart.Size = new Size(167, 23);
             buttonUDPstart.TabIndex = 7;
-            buttonUDPstart.Text = "buttonUDPstart";
+            buttonUDPstart.Text = "buttonUDPstart (bind)";
             buttonUDPstart.UseVisualStyleBackColor = true;
             buttonUDPstart.Click += buttonUDPstart_Click;
             // 
             // buttonTCPstart
             // 
-            buttonTCPstart.Location = new Point(156, 486);
+            buttonTCPstart.Location = new Point(185, 486);
             buttonTCPstart.Name = "buttonTCPstart";
-            buttonTCPstart.Size = new Size(138, 23);
+            buttonTCPstart.Size = new Size(167, 23);
             buttonTCPstart.TabIndex = 8;
-            buttonTCPstart.Text = "buttonTCPstart";
+            buttonTCPstart.Text = "buttonTCPstart (listen)";
             buttonTCPstart.UseVisualStyleBackColor = true;
             buttonTCPstart.Click += buttonTCPstart_Click;
             // 
             // buttonStop
             // 
-            buttonStop.Location = new Point(336, 486);
+            buttonStop.Enabled = false;
+            buttonStop.Location = new Point(531, 460);
             buttonStop.Name = "buttonStop";
-            buttonStop.Size = new Size(110, 23);
+            buttonStop.Size = new Size(126, 49);
             buttonStop.TabIndex = 9;
             buttonStop.Text = "buttonStop";
             buttonStop.UseVisualStyleBackColor = true;
             buttonStop.Click += buttonStop_Click;
             // 
+            // buttonTCPconn
+            // 
+            buttonTCPconn.Enabled = false;
+            buttonTCPconn.Location = new Point(358, 486);
+            buttonTCPconn.Name = "buttonTCPconn";
+            buttonTCPconn.Size = new Size(167, 23);
+            buttonTCPconn.TabIndex = 10;
+            buttonTCPconn.Text = "buttonTCPconn (connect)";
+            buttonTCPconn.UseVisualStyleBackColor = true;
+            buttonTCPconn.Click += buttonTCPconn_Click;
+            // 
+            // listStat
+            // 
+            listStat.FormattingEnabled = true;
+            listStat.ItemHeight = 15;
+            listStat.Location = new Point(12, 515);
+            listStat.Name = "listStat";
+            listStat.Size = new Size(513, 139);
+            listStat.TabIndex = 11;
+            // 
+            // buttonStat
+            // 
+            buttonStat.Location = new Point(531, 558);
+            buttonStat.Name = "buttonStat";
+            buttonStat.Size = new Size(126, 23);
+            buttonStat.TabIndex = 12;
+            buttonStat.Text = "buttonStat";
+            buttonStat.UseVisualStyleBackColor = true;
+            buttonStat.Click += buttonStat_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(584, 742);
+            ClientSize = new Size(668, 750);
+            Controls.Add(buttonStat);
+            Controls.Add(listStat);
+            Controls.Add(buttonTCPconn);
             Controls.Add(buttonStop);
             Controls.Add(buttonTCPstart);
             Controls.Add(buttonUDPstart);
@@ -169,5 +207,8 @@
         private Button buttonUDPstart;
         private Button buttonTCPstart;
         private Button buttonStop;
+        private Button buttonTCPconn;
+        private ListBox listStat;
+        private Button buttonStat;
     }
 }
